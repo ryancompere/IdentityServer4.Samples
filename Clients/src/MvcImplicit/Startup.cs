@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using IdentityModel;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace MvcImplicit
@@ -44,7 +46,8 @@ namespace MvcImplicit
             app.UseCookieAuthentication(new CookieAuthenticationOptions
             {
                 AuthenticationScheme = "cookies",
-                AutomaticAuthenticate = true
+                AutomaticAuthenticate = true,
+                ExpireTimeSpan = TimeSpan.FromMinutes(60)
             });
 
             JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
@@ -56,16 +59,22 @@ namespace MvcImplicit
 
                 Authority = Clients.Constants.BaseAddress,
                 RequireHttpsMetadata = false,
-                ClientId = "mvc_implicit",
-                ResponseType = "id_token token",
-                SaveTokens = true
+                ClientId = "mvc.implicit",
+                ResponseType = "id_token",
+                SaveTokens = true,
+
+                TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                {
+                    NameClaimType = JwtClaimTypes.Name,
+                    RoleClaimType = JwtClaimTypes.Role,
+                }
             };
 
             oidcOptions.Scope.Clear();
             oidcOptions.Scope.Add("openid");
+            oidcOptions.Scope.Add("profile");
             oidcOptions.Scope.Add("email");
             oidcOptions.Scope.Add("roles");
-            oidcOptions.Scope.Add("api1");
 
             app.UseOpenIdConnectAuthentication(oidcOptions);
 
